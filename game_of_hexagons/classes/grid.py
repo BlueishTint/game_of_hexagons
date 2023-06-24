@@ -1,3 +1,10 @@
+from typing import Final, TypeVar, Generic
+from copy import deepcopy
+
+T = TypeVar("T")
+Coordinate = tuple[int, int]
+
+
 def check_value(value: int):
     """Checks a value to make sure that it is valid and returns it
 
@@ -9,52 +16,90 @@ def check_value(value: int):
         raise ValueError("Value must be greater than 0")
 
 
-class Grid:
-    def __init__(self, x: int, y: int, default: int = 0):
-        check_value(x)
-        check_value(y)
-        self._x = x
-        self._y = y
-        self._grid = [[default for _ in range(self.x)] for _ in range(self.y)]
+class Grid(Generic[T]):
+    def __init__(self, width: int, height: int, off: T = 0, on: T = 1):
+        check_value(width)
+        check_value(height)
+        self._width: Final = width
+        self._height: Final = height
+        self._off: Final = off
+        self._on: Final = on
+        self._grid = [[off for _ in range(self.width)] for _ in range(self.height)]
 
     @property
-    def x(self):
-        return self._x
+    def width(self):
+        return self._width
 
     @property
-    def y(self):
-        return self._y
+    def height(self):
+        return self._height
 
     @property
     def grid(self):
         return self._grid
 
-    def set_point(self, x: int, y: int, value: int):
-        self._grid[x][y] = value
+    @property
+    def off(self):
+        return self._off
+
+    @property
+    def on(self):
+        return self._on
+
+    def is_coord_in_grid(self, coordinate: Coordinate) -> bool:
+        if coordinate[0] > self.width - 1 or coordinate[1] > self.height - 1:
+            return False
+        return True
+
+    def _set_point(self, coordinate: Coordinate, value: T):
+        self.grid[coordinate[1]][coordinate[0]] = value
+
+    def flip_point(self, coordinate: Coordinate):
+        if not self.is_coord_in_grid(coordinate):
+            raise IndexError("That coordinate is not in the grid")
+        if self.grid[coordinate[1]][coordinate[0]] == self.on:
+            self._set_point(coordinate, self.off)
+        else:
+            self._set_point(coordinate, self.on)
+
+    def flip_points(self, coordinates: list[Coordinate]):
+        for coordinate in coordinates:
+            self.flip_point(coordinate)
 
     def print_grid(self):
-        for i, row in enumerate(self._grid):
+        for row in self.grid:
+            print(row)
+
+
+class HexagonalGrid(Grid[T]):
+    def __init__(self, width: int, height: int, off: T = 0, on: T = 1):
+        super().__init__(width, height, off, on)
+
+    def print_grid(self):
+        for i, row in enumerate(self.grid):
             if i % 2:
                 for n in row:
                     print(n, end=" ", flush=True)
                 print()
             else:
-                print("  ")
+                print(end=" ")
                 for n in row:
                     print(n, end=" ", flush=True)
                 print()
 
-    def find_neighbors(self, x: int, y: int) -> list[tuple[int, int]]:
-        top_cell = x, abs(len(self._grid) % (y + 1))  # up one cell
-        bottom_cell = x, abs(len(self._grid) % (y - 1))  # down one cell
-        top_left_cell = abs(len(self._grid) % (x - 1)), y  # one cell left
-        top_right_cell = abs(len(self._grid) % (x + 1)), y  # one cell right
-        bottom_left_cell = abs(len(self._grid) % (x - 1)), abs(
-            len(self._grid) % (y - 1)
-        )  # one cell down, one cell left
-        bottom_right_cell = abs(len(self._grid) % (y + 1)), abs(
-            len(self._grid) % (x - 1)
-        )  # one cell down, one cell right
+    def get_neighbors(self, coordinate: Coordinate) -> list[Coordinate]:
+        top_cell = coordinate[0], (coordinate[1] + 1) % self.height  # up one cell
+        bottom_cell = coordinate[0], (coordinate[1] - 1) % self.height  # down one cell
+        top_left_cell = (coordinate[0] - 1) % self.width, coordinate[1]  # one cell left
+        top_right_cell = (coordinate[0] + 1) % self.width, coordinate[
+            1
+        ]  # one cell right
+        bottom_left_cell = (coordinate[0] - 1) % self.width, (
+            coordinate[1] - 1
+        ) % self.height  # one cell down, one cell left
+        bottom_right_cell = (coordinate[1] + 1) % self.width, (
+            coordinate[0] - 1
+        ) % self.height  # one cell down, one cell right
         return [
             top_cell,
             bottom_cell,
@@ -64,16 +109,42 @@ class Grid:
             top_left_cell,
         ]
 
-    def replace_neighbors(self, x: int, y: int):
-        neighbors = self.find_neighbors(x, y)
+    def update_point(self, coordinate: Coordinate, cached_grid: list[list[T]]):
+        neighbors = self.get_neighbors(coordinate)
+        cells_on = 0
+
         for neighbor in neighbors:
-            self.set_point(neighbor[0], neighbor[1], 1)
+            if cached_grid[neighbor[1]][neighbor[0]] == 1:
+                cells_on += 1
+        print(cells_on)
+
+        if cells_on == 3 and cached_grid[coordinate[1]][coordinate[0]] == self.off:
+            self.flip_point(coordinate)
+        elif (cells_on < 2 or cells_on > 3) and cached_grid[coordinate[1]][
+            coordinate[0]
+        ] == self.on:
+            self.flip_point(coordinate)
+
+    def update(self):
+        cached_grid = deepcopy(self.grid)
+        for x in range(self.width):
+            for y in range(self.height):
+                self.update_point((x, y), cached_grid)
+
+    def step_and_print(self):
+        self.update()
+        self.print_grid()
 
 
-my_grid = Grid(10, 10)
+if __name__ == "__main__":
+    from time import sleep
 
-my_grid.set_point(5, 5, 8)
+    my_grid = HexagonalGrid(10, 10)
 
-my_grid.replace_neighbors(5, 5)
-
-my_grid.print_grid()
+    my_grid.flip_points([(4, 4), (5, 4), (4, 5)])
+    print("======STARTING======")
+    my_grid.print_grid()
+    while True:
+        print("========================")
+        my_grid.step_and_print()
+        sleep(1)
