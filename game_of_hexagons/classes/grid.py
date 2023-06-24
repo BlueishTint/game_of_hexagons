@@ -52,12 +52,12 @@ class Grid(Generic[T]):
         return True
 
     def _set_point(self, coordinate: Coordinate, value: T):
-        self.grid[coordinate[1]][coordinate[0]] = value
+        self.grid[coordinate[0]][coordinate[1]] = value
 
     def flip_point(self, coordinate: Coordinate):
         if not self.is_coord_in_grid(coordinate):
             raise IndexError("That coordinate is not in the grid")
-        if self.grid[coordinate[1]][coordinate[0]] == self.on:
+        if self.grid[coordinate[0]][coordinate[1]] == self.on:
             self._set_point(coordinate, self.off)
         else:
             self._set_point(coordinate, self.on)
@@ -67,8 +67,12 @@ class Grid(Generic[T]):
             self.flip_point(coordinate)
 
     def print_grid(self):
-        for row in self.grid:
-            print(row)
+        c = ""
+        for column in range(0, len(self.grid[0])-1):
+            for row in range(0, len(self.grid)):
+                c = c + " " + self.grid[row][column]
+                print(c)
+                
 
 
 class HexagonalGrid(Grid[T]):
@@ -76,16 +80,23 @@ class HexagonalGrid(Grid[T]):
         super().__init__(width, height, off, on)
 
     def print_grid(self):
-        for i, row in enumerate(self.grid):
-            if i % 2:
-                for n in row:
-                    print(n, end=" ", flush=True)
-                print()
-            else:
-                print(end=" ")
-                for n in row:
-                    print(n, end=" ", flush=True)
-                print()
+        # for i, row in enumerate(self.grid):
+        #     if i % 2:
+        #         for n in row:
+        #             print(n, end=" ", flush=True)
+        #         print()
+        #     else:
+        #         print(end=" ")
+        #         for n in row:
+        #             print(n, end=" ", flush=True)
+        #         print()
+        for column in range(0, len(self.grid[0])-1):
+            c = ""
+            if column % 2:
+                c = c + ' '
+            for row in range(0, len(self.grid)):
+                c = c + " " + str(self.grid[row][column])
+            print(c)
 
     def get_neighbors(self, coordinate: Coordinate) -> list[Coordinate]:
         top_cell = coordinate[0], (coordinate[1] + 1) % self.height  # up one cell
@@ -97,8 +108,8 @@ class HexagonalGrid(Grid[T]):
         bottom_left_cell = (coordinate[0] - 1) % self.width, (
             coordinate[1] - 1
         ) % self.height  # one cell down, one cell left
-        bottom_right_cell = (coordinate[1] + 1) % self.width, (
-            coordinate[0] - 1
+        bottom_right_cell = (coordinate[0] + 1) % self.width, (
+            coordinate[1] - 1
         ) % self.height  # one cell down, one cell right
         return [
             top_cell,
@@ -114,14 +125,14 @@ class HexagonalGrid(Grid[T]):
         cells_on = 0
 
         for neighbor in neighbors:
-            if cached_grid[neighbor[1]][neighbor[0]] == 1:
+            if cached_grid[neighbor[0]][neighbor[1]] == 1:
                 cells_on += 1
-        print(cells_on)
+        # print(cells_on)
 
-        if cells_on == 3 and cached_grid[coordinate[1]][coordinate[0]] == self.off:
+        if cells_on == 3 and cached_grid[coordinate[0]][coordinate[1]] == self.off:
             self.flip_point(coordinate)
-        elif (cells_on < 2 or cells_on > 3) and cached_grid[coordinate[1]][
-            coordinate[0]
+        elif (cells_on < 2 or cells_on > 3) and cached_grid[coordinate[0]][
+            coordinate[1]
         ] == self.on:
             self.flip_point(coordinate)
 
@@ -134,6 +145,12 @@ class HexagonalGrid(Grid[T]):
     def step_and_print(self):
         self.update()
         self.print_grid()
+
+    def draw_grid(self):
+        for x in range(self.width):
+            for y in range(self.height):
+                if self.grid[x][y] == self.off:
+                    pass # unfinished
 
 
 if __name__ == "__main__":
