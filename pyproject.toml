@@ -2,12 +2,12 @@
 name = "game-of-hexagons"
 version = "0.1.0"
 description = ""
-authors = ["BlueishTint <43736613+BlueishTint@users.noreply.github.com>"]
+authors = ["BlueishTint <43736613+BlueishTint@users.noreply.github.com>",  "Theawesometurtl"]
 readme = "README.md"
 packages = [{include = "game_of_hexagons"}]
 
 [tool.poetry.dependencies]
-python = "^3.11"
+python = "3.11.4"
 
 
 [build-system]
