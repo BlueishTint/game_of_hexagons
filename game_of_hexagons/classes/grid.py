@@ -68,11 +68,10 @@ class Grid(Generic[T]):
 
     def print_grid(self):
         c = ""
-        for column in range(0, len(self.grid[0])-1):
-            for row in range(0, len(self.grid)):
-                c = c + " " + self.grid[row][column]
+        for column in range(len(self.grid[0]) - 1):
+            for row in range(len(self.grid)):
+                c = f"{c} {self.grid[row][column]}"
                 print(c)
-                
 
 
 class HexagonalGrid(Grid[T]):
@@ -90,12 +89,12 @@ class HexagonalGrid(Grid[T]):
         #         for n in row:
         #             print(n, end=" ", flush=True)
         #         print()
-        for column in range(0, len(self.grid[0])-1):
+        for column in range(len(self.grid[0]) - 1):
             c = ""
             if column % 2:
-                c = c + ' '
-            for row in range(0, len(self.grid)):
-                c = c + " " + str(self.grid[row][column])
+                c = f"{c} "
+            for row in range(len(self.grid)):
+                c = f"{c} {str(self.grid[row][column])}"
             print(c)
 
     def get_neighbors(self, coordinate: Coordinate) -> list[Coordinate]:
@@ -150,18 +149,4 @@ class HexagonalGrid(Grid[T]):
         for x in range(self.width):
             for y in range(self.height):
                 if self.grid[x][y] == self.off:
-                    pass # unfinished
-
-
-if __name__ == "__main__":
-    from time import sleep
-
-    my_grid = HexagonalGrid(10, 10)
-
-    my_grid.flip_points([(4, 4), (5, 4), (4, 5)])
-    print("======STARTING======")
-    my_grid.print_grid()
-    while True:
-        print("========================")
-        my_grid.step_and_print()
-        sleep(1)
+                    pass  # unfinished

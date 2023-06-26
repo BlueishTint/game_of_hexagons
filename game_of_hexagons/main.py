@@ -14,26 +14,25 @@ root.title("awesomesauce grid")
 
 canvas = tk.Canvas(master=root, bg="black", height=500, width=500)
 
+
 def create_hexagon(radius: int, x: int, y: int):
+    COS30 = 0.86602540378
     x1 = x - radius
     y1 = y
-    x2 = x - radius/2
-    y2 = y + 0.86602540378 * radius # 0.86602540378 = cos 30 degrees
-    x3 = x + radius/2
+    x2 = x - radius / 2
+    y2 = y + COS30 * radius  # 0.86602540378 = cos 30 degrees
+    x3 = x + radius / 2
     y3 = y2
     x4 = x + radius
     y4 = y
     x5 = x3
-    y5 = y - 0.86602540378 * radius
+    y5 = y - COS30 * radius
     x6 = x2
     y6 = y5
-    
-    
-    canvas.create_polygon(x1, y1, x2, y2, x3, y3, x4, y4, x5, y5, x6, y6, outline="green", fill="black")
 
-
-
-
+    canvas.create_polygon(
+        x1, y1, x2, y2, x3, y3, x4, y4, x5, y5, x6, y6, outline="green", fill="black"
+    )
 
 
 canvas.pack()
@@ -44,7 +43,6 @@ hexagonal_grid.flip_points([(5, 0), (6, 0), (7, 0), (8, 0), (9, 0), (8, 1), (7, 
 
 hexagonal_grid.print_grid()
 while True:
-
     print("========================")
     hexagonal_grid.step_and_print()
     create_hexagon(10, 100, 100)
