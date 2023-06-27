@@ -1,50 +1,27 @@
 import tkinter as tk
-from classes import *
-from time import sleep
+from random import randint
 
-# First a function for creating hexagons, then tile
-# then we would make an array or map of the grid
-# update function
+from game_of_hexagons.classes import HexagonalGrid
 
-# grid = [[0 for _ in range(50)] for _ in range(50)]
-# print(f"grid is {len(grid[0])}x{len(grid)}")
+HEIGHT = 1000
+WIDTH = 1000
 
 root = tk.Tk()
 root.title("awesomesauce grid")
 
-canvas = tk.Canvas(master=root, bg="black", height=500, width=500)
-
-
-def create_hexagon(radius: int, x: int, y: int):
-    COS30 = 0.86602540378
-    x1 = x - radius
-    y1 = y
-    x2 = x - radius / 2
-    y2 = y + COS30 * radius  # 0.86602540378 = cos 30 degrees
-    x3 = x + radius / 2
-    y3 = y2
-    x4 = x + radius
-    y4 = y
-    x5 = x3
-    y5 = y - COS30 * radius
-    x6 = x2
-    y6 = y5
-
-    canvas.create_polygon(
-        x1, y1, x2, y2, x3, y3, x4, y4, x5, y5, x6, y6, outline="green", fill="black"
-    )
-
+canvas = tk.Canvas(master=root, bg="black", height=HEIGHT, width=WIDTH)
 
 canvas.pack()
 
+grid: HexagonalGrid = HexagonalGrid(100, 100)
+grid.flip_points([(randint(0, 99), randint(0, 99)) for _ in range(1000)])
 
-hexagonal_grid = HexagonalGrid(20, 20, 0, 1)
-hexagonal_grid.flip_points([(5, 0), (6, 0), (7, 0), (8, 0), (9, 0), (8, 1), (7, 1)])
 
-hexagonal_grid.print_grid()
-while True:
-    print("========================")
-    hexagonal_grid.step_and_print()
-    create_hexagon(10, 100, 100)
-    root.mainloop()
-    sleep(1)
+def gameloop():
+    grid.draw_grid(canvas, 10)
+    grid.update()
+    root.after(500, gameloop)
+
+
+gameloop()
+root.mainloop()

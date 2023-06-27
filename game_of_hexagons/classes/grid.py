@@ -1,25 +1,20 @@
-from typing import Final, TypeVar, Generic
 from copy import deepcopy
+from math import cos, radians
+from tkinter import Canvas
+from typing import Final, TypeVar, Generic
 
 T = TypeVar("T")
 Coordinate = tuple[int, int]
+COS30: Final = cos(radians(30))
 
 
 def check_value(value: int):
-    """Checks a value to make sure that it is valid and returns it
-
-    :param int value: The value to check
-    :raises ValueError: Raised if the value is not greater than 0
-    :return int: Returns the value if it passes the check
-    """
     if value < 1:
         raise ValueError("Value must be greater than 0")
 
 
 class Grid(Generic[T]):
     def __init__(self, width: int, height: int, off: T = 0, on: T = 1):
-        check_value(width)
-        check_value(height)
         self._width: Final = width
         self._height: Final = height
         self._off: Final = off
@@ -68,8 +63,8 @@ class Grid(Generic[T]):
 
     def print_grid(self):
         c = ""
-        for column in range(len(self.grid[0]) - 1):
-            for row in range(len(self.grid)):
+        for column in range(self.height - 1):
+            for row in range(self.width):
                 c = f"{c} {self.grid[row][column]}"
                 print(c)
 
@@ -79,21 +74,11 @@ class HexagonalGrid(Grid[T]):
         super().__init__(width, height, off, on)
 
     def print_grid(self):
-        # for i, row in enumerate(self.grid):
-        #     if i % 2:
-        #         for n in row:
-        #             print(n, end=" ", flush=True)
-        #         print()
-        #     else:
-        #         print(end=" ")
-        #         for n in row:
-        #             print(n, end=" ", flush=True)
-        #         print()
-        for column in range(len(self.grid[0]) - 1):
+        for column in range(self.height - 1):
             c = ""
             if column % 2:
                 c = f"{c} "
-            for row in range(len(self.grid)):
+            for row in range(self.width):
                 c = f"{c} {str(self.grid[row][column])}"
             print(c)
 
@@ -105,10 +90,10 @@ class HexagonalGrid(Grid[T]):
             1
         ]  # one cell right
         bottom_left_cell = (coordinate[0] - 1) % self.width, (
-            coordinate[1] - 1
+                (coordinate[1] - 1) % self.height
         ) % self.height  # one cell down, one cell left
         bottom_right_cell = (coordinate[0] + 1) % self.width, (
-            coordinate[1] - 1
+                (coordinate[1] - 1) % self.height
         ) % self.height  # one cell down, one cell right
         return [
             top_cell,
@@ -126,9 +111,8 @@ class HexagonalGrid(Grid[T]):
         for neighbor in neighbors:
             if cached_grid[neighbor[0]][neighbor[1]] == 1:
                 cells_on += 1
-        # print(cells_on)
 
-        if cells_on == 3 and cached_grid[coordinate[0]][coordinate[1]] == self.off:
+        if cells_on == 2 and cached_grid[coordinate[0]][coordinate[1]] == self.off:
             self.flip_point(coordinate)
         elif (cells_on < 2 or cells_on > 3) and cached_grid[coordinate[0]][
             coordinate[1]
@@ -145,8 +129,41 @@ class HexagonalGrid(Grid[T]):
         self.update()
         self.print_grid()
 
-    def draw_grid(self):
-        for x in range(self.width):
-            for y in range(self.height):
+    @staticmethod
+    def create_hexagon(
+            canvas: Canvas, radius: int, x: float, y: float, fill: str = "black"
+    ):
+        x1 = x - radius
+        y1 = y
+        x2 = x - radius / 2
+        y2 = y + COS30 * radius
+        x3 = x + radius / 2
+        y3 = y2
+        x4 = x + radius
+        y4 = y
+        x5 = x3
+        y5 = y - COS30 * radius
+        x6 = x2
+        y6 = y5
+
+        canvas.create_polygon(
+            x1, y1, x2, y2, x3, y3, x4, y4, x5, y5, x6, y6, outline="white", fill=fill, tags="hexagon"
+        )
+
+    def draw_grid(self, canvas: Canvas, radius: int):
+        x_scaling_factor = radius * 1.5
+        y_scaling_factor = COS30 * radius * 2
+        for x in range(0, self.width):
+            for y in range(0, self.height):
                 if self.grid[x][y] == self.off:
-                    pass  # unfinished
+                    fill = "black"
+                else:
+                    fill = "green"
+                if x % 2 == 0:
+                    yoffset = y_scaling_factor
+                else:
+                    yoffset = y_scaling_factor / 2
+                self.create_hexagon(
+                    canvas, radius, x_scaling_factor * x + radius, y_scaling_factor * y + yoffset,
+                    fill
+                )
