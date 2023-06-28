@@ -2,8 +2,8 @@ from copy import deepcopy
 from math import cos, radians
 from tkinter import Canvas
 from typing import Final, TypeVar, Generic
+
 import numpy as np
-import time as t
 
 T = TypeVar("T")
 Coordinate = tuple[int, int]
@@ -16,7 +16,7 @@ def check_value(value: int):
 
 
 class Grid(Generic[T]):
-    def __init__(self, width: int, height: int, off: T = 0, on: T = 1):
+    def __init__(self, width: int, height: int, off: T, on: T):
         self._width: Final = width
         self._height: Final = height
         self._off: Final = off
@@ -72,7 +72,7 @@ class Grid(Generic[T]):
 
 
 class HexagonalGrid(Grid[T]):
-    def __init__(self, width: int, height: int, off: T = 0, on: T = 1):
+    def __init__(self, width: int, height: int, off: T, on: T):
         super().__init__(width, height, off, on)
 
     def print_grid(self):
@@ -106,7 +106,7 @@ class HexagonalGrid(Grid[T]):
             top_left_cell,
         ]
 
-    def update_point(self, coordinate: Coordinate, cached_grid: list[list[T]]):
+    def update_point(self, coordinate: Coordinate, cached_grid: np.ndarray):
         neighbors = self.get_neighbors(coordinate)
         cells_on = 0
 
@@ -116,7 +116,7 @@ class HexagonalGrid(Grid[T]):
 
         if cells_on == 2 and cached_grid[coordinate[0], coordinate[1]] == self.off:
             self.flip_point(coordinate)
-        elif (cells_on < 2 or cells_on > 3) and cached_grid[coordinate[0], coordinate[1]] == self.on:
+        elif (cells_on < 3 or cells_on > 4) and cached_grid[coordinate[0], coordinate[1]] == self.on:
             self.flip_point(coordinate)
 
     def update(self):
@@ -125,13 +125,9 @@ class HexagonalGrid(Grid[T]):
             for y in range(self.height):
                 self.update_point((x, y), cached_grid)
 
-    def step_and_print(self):
-        self.update()
-        self.print_grid()
-
     @staticmethod
     def create_hexagon(
-            canvas: Canvas, radius: int, x: float, y: float, fill: str = "black", tag: str = "hexagon"
+            canvas: Canvas, radius: int, x: float, y: float, fill: str, tag: str = "hexagon"
     ):
         x1 = x - radius
         y1 = y
@@ -150,9 +146,10 @@ class HexagonalGrid(Grid[T]):
             x1, y1, x2, y2, x3, y3, x4, y4, x5, y5, x6, y6, outline="white", fill=fill, tags=tag
         )
 
-    def draw_grid(self, canvas: Canvas, filled_hexagon_item_ids: list[str], empty_hexagon_item_ids:list[str]):
-        for x in range(0, self.width):
-            for y in range(0, self.height):
+    def draw_grid(self, canvas: Canvas, filled_hexagon_item_ids: tuple[int, ...],
+                  empty_hexagon_item_ids: tuple[int, ...]):
+        for x in range(self.width):
+            for y in range(self.height):
                 if self.grid[x, y] == self.off:
                     canvas.itemconfigure(filled_hexagon_item_ids[self.height * x + y], state="hidden")
                     canvas.itemconfigure(empty_hexagon_item_ids[self.height * x + y], state="normal")
@@ -160,7 +157,6 @@ class HexagonalGrid(Grid[T]):
                     canvas.itemconfigure(filled_hexagon_item_ids[self.height * x + y], state="normal")
                     canvas.itemconfigure(empty_hexagon_item_ids[self.height * x + y], state="hidden")
 
-                
     def create_hexagon_items(self, canvas: Canvas, radius: int):
         x_scaling_factor = radius * 1.5
         y_scaling_factor = COS30 * radius * 2
